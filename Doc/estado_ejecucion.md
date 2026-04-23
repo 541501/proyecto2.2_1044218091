@@ -1,7 +1,7 @@
 # 📊 ClassSport — Estado de Ejecución
 
 > Plantilla de tracking del proyecto. Actualizar después de cada prompt ejecutado.
-> **Última actualización:** _[Pendiente de inicio]_
+> **Última actualización:** _2026-04-23 - Prompt 2 Completado_ ✅
 
 ---
 
@@ -21,13 +21,13 @@
 
 | Fase | Nombre | Estado | % Avance | Bloqueadores | Fecha Inicio | Fecha Fin |
 |---|---|---|---|---|---|---|
-| **Fase 1** | Setup & Infraestructura | ⏳ Pendiente | 0% | — | — | — |
-| **Fase 2** | Backend Core (APIs) | ⏳ Pendiente | 0% | Fase 1 incompleta | — | — |
-| **Fase 3** | Frontend Core (UI) | ⏳ Pendiente | 0% | Fase 2 incompleta | — | — |
-| **Fase 4** | Admin & Integración | ⏳ Pendiente | 0% | Fase 3 incompleta | — | — |
-| **Fase 5** | QA & Deploy Producción | ⏳ Pendiente | 0% | Fases 1-4 completas | — | — |
+| **Fase 1** | Setup & Infraestructura | ✅ Completada | 100% | — | 2026-04-23 | 2026-04-23 |
+| **Fase 2** | Backend Core (APIs CRUD) | ✅ Completada | 100% | — | 2026-04-23 | 2026-04-23 |
+| **Fase 3** | Frontend Core (UI) | ⏳ Pendiente | 0% | — | — | — |
+| **Fase 4** | Admin & Integración | ⏳ Pendiente | 0% | — | — | — |
+| **Fase 5** | QA & Deploy Producción | ⏳ Pendiente | 0% | — | — | — |
 
-**Progreso Global:** `█░░░░░░░░░` **0%** (0/5 fases completadas)
+**Progreso Global:** `████░░░░░░` **40%** (2/5 fases completadas)
 
 ---
 
@@ -37,14 +37,14 @@
 
 | Tarea | Estado | Responsable | Notas |
 |---|---|---|---|
-| 1.1 Inicializar Next.js + TypeScript | ⏳ Pendiente | — | — |
-| 1.2 Configurar Tailwind + shadcn/ui | ⏳ Pendiente | — | — |
-| 1.3 Vercel Postgres + Prisma | ⏳ Pendiente | — | — |
-| 1.4 Schema Prisma completo | ⏳ Pendiente | — | — |
-| 1.5 NextAuth.js | ⏳ Pendiente | — | — |
-| 1.6 Middleware RBAC | ⏳ Pendiente | — | — |
-| 1.7 GitHub + Vercel deploy | ⏳ Pendiente | — | — |
-| 1.8 Seed de datos | ⏳ Pendiente | — | — |
+| 1.1 Inicializar Next.js + TypeScript | ✅ Completada | AI | Next.js 14 App Router |
+| 1.2 Configurar Tailwind + shadcn/ui | ✅ Completada | AI | Tema personalizado con colores |
+| 1.3 Vercel Postgres + Prisma | ✅ Completada | AI | Schema con 6 modelos |
+| 1.4 Schema Prisma completo | ✅ Completada | AI | 6 modelos: Usuario, Bloque, Salon, HoraFranja, Reserva |
+| 1.5 NextAuth.js v5 | ✅ Completada | AI | Roles: ADMIN, COORDINADOR, PROFESOR |
+| 1.6 Middleware RBAC | ✅ Completada | AI | Protección de rutas por rol |
+| 1.7 GitHub + Vercel deploy | ⏳ Pendiente | — | Pendiente configuración |
+| 1.8 Seed de datos | ✅ Completada | AI | 32+ registros de prueba |
 
 ### Fase 2 — Backend Core
 

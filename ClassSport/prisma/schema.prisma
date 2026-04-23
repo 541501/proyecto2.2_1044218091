@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+model Usuario {
+  id            String     @id @default(cuid())
+  nombre        String
+  email         String     @unique
+  passwordHash  String
+  rol           Rol        @default(PROFESOR)
+  departamento  String     @default("Sin asignar")
+  activo        Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  reservas      Reserva[]
+
+  @@map("usuarios")
+}
+
+enum Rol {
+  PROFESOR
+  ADMIN
+  COORDINADOR
+}
+
+model Bloque {
+  id          String    @id @default(cuid())
+  nombre      String    @unique // A, B, C
+  descripcion String    @default("")
+  activo      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  salones     Salon[]
+
+  @@map("bloques")
+}
+
+model Salon {
+  id            String    @id @default(cuid())
+  bloqueId      String
+  bloque        Bloque    @relation(fields: [bloqueId], references: [id], onDelete: Cascade)
+  codigo        String    // A-101, A-102, etc. (único por bloque)
+  nombre        String
+  capacidad     Int
+  tipo          TipoSalon @default(AULA)
+  equipamiento  Json      @default("{}")
+  activo        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reservas      Reserva[]
+
+  @@unique([bloqueId, codigo])
+  @@index([bloqueId])
+  @@map("salones")
+}
+
+enum TipoSalon {
+  AULA
+  LABORATORIO
+  AUDITORIO
+  SALA_SISTEMAS
+}
+
+model HoraFranja {
+  id         String    @id @default(cuid())
+  horaInicio String    // HH:MM format
+  horaFin    String    // HH:MM format
+  etiqueta   String    // "07:00-08:00", etc.
+  orden      Int       @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reservas   Reserva[]
+
+  @@map("horas_franjas")
+}
+
+model Reserva {
+  id             String         @id @default(cuid())
+  salonId        String
+  salon          Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  usuarioId      String
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  franjaId       String
+  franja         HoraFranja     @relation(fields: [franjaId], references: [id], onDelete: Cascade)
+  fecha          DateTime       @db.Date
+  materia        String
+  grupo          String
+  observaciones  String         @default("")
+  estado         EstadoReserva  @default(PENDIENTE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([salonId, franjaId, fecha])
+  @@map("reservas")
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
