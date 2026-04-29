@@ -195,3 +195,10 @@ export async function clearAllCache(): Promise<void> {
   }
   // Nota: Redis no tiene clear directo, se omite en producción
 }
+
+/**
+ * Invalida el horario del salón para una fecha específica
+ */
+export async function invalidarHorarioSalon(salonId: string, fecha: string): Promise<void> {
+  await invalidateSalonCache(salonId, fecha);
+}

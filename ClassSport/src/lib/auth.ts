@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
@@ -9,7 +9,7 @@ const loginSchema = z.object({
   password: z.string().min(6, "Contraseña requerida"),
 });
 
-export const { auth, signIn, signOut, handlers } = NextAuth({
+export const authOptions: NextAuthConfig = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -82,4 +82,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     updateAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+export const { auth, signIn, signOut, handlers } = NextAuth(authOptions);
