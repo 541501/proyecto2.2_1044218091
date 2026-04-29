@@ -1,60 +1,96 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
+/**
+ * lib/auth.ts — Funciones de autenticación y JWT
+ *
+ * CRÍTICO:
+ * - JWT con cookie HttpOnly, Secure, SameSite=Strict
+ * - Nunca localStorage
+ * - Tokens de 24 horas
+ */
 
-const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Contraseña requerida"),
-});
+import { SignJWT, jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
+import { JWTPayload, SafeUser } from './types';
 
-export const authOptions: NextAuthConfig = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        try {
-          const { email, password } = await loginSchema.parseAsync(credentials);
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'change-me-in-production-12345'
+);
 
-          const user = await prisma.usuario.findUnique({
-            where: { email },
-          });
+const COOKIE_NAME = 'classsport_token';
+const TOKEN_EXPIRY = 24 * 60 * 60; // 24 horas en segundos
 
-          if (!user) {
-            throw new Error("Usuario no encontrado");
-          }
+/**
+ * Crea un JWT para un usuario
+ */
+export async function createJWT(user: SafeUser): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + TOKEN_EXPIRY;
 
-          if (!user.activo) {
-            throw new Error("Usuario inactivo");
-          }
+  const token = await new SignJWT({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  } as Omit<JWTPayload, 'iat' | 'exp'>)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt(now)
+    .setExpirationTime(exp)
+    .sign(JWT_SECRET);
 
-          const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+  return token;
+}
 
-          if (!passwordMatch) {
-            throw new Error("Contraseña incorrecta");
-          }
+/**
+ * Verifica y decodifica un JWT
+ */
+export async function verifyJWT(token: string): Promise<JWTPayload | null> {
+  try {
+    const verified = await jwtVerify(token, JWT_SECRET);
+    return verified.payload as JWTPayload;
+  } catch (error) {
+    return null;
+  }
+}
 
-          return {
-            id: user.id,
-            name: user.nombre,
-            email: user.email,
-            image: null,
-          };
-        } catch (error) {
-          return null;
-        }
-      },
-    }),
-  ],
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+/**
+ * Establece la cookie de sesión (HttpOnly, Secure, SameSite=Strict)
+ */
+export async function setSessionCookie(token: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: TOKEN_EXPIRY,
+    path: '/',
+  });
+}
+
+/**
+ * Obtiene el token de la cookie
+ */
+export async function getSessionToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get(COOKIE_NAME);
+  return cookie?.value || null;
+}
+
+/**
+ * Limpia la cookie de sesión (logout)
+ */
+export async function clearSessionCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+}
+
+/**
+ * Obtiene el usuario actual desde la cookie
+ */
+export async function getCurrentSession(): Promise<JWTPayload | null> {
+  const token = await getSessionToken();
+  if (!token) {
+    return null;
+  }
+  return verifyJWT(token);
+}
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

@@ -1,32 +1,65 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { protectRoute } from '@/lib/withAuth';
+import { verifyJWT } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rutas públicas que no requieren autenticación
-  const publicRoutes = ["/login", "/"];
-  const authApiRoutes = /^\/api\/auth\//;
+  const publicRoutes = ['/login', '/'];
+  const publicApiRoutes = ['/api/auth/login', '/api/system/mode'];
 
-  if (publicRoutes.includes(pathname) || authApiRoutes.test(pathname)) {
+  // Permitir rutas públicas
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Verificar sesión
-  const session = await auth();
-
-  if (!session) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Permitir API públicas
+  if (publicApiRoutes.includes(pathname)) {
+    return NextResponse.next();
   }
 
-  // Rutas de admin solo para ADMIN y COORDINADOR
-  if (pathname.startsWith("/admin")) {
-    const userRole = session.user?.rol;
-    if (userRole !== "ADMIN" && userRole !== "COORDINADOR") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Para rutas privadas, verificar token
+  const token = request.cookies.get('classsport_token')?.value;
+
+  if (!token) {
+    // Si no hay token y es una API route privada
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Si es una página, redirigir a login
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Verificar JWT
+  const payload = await verifyJWT(token);
+
+  if (!payload) {
+    // Token inválido o expirado
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Rutas de admin solo para admin
+  if (pathname.startsWith('/admin')) {
+    if (payload.role !== 'admin') {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  }
+
+  // Rutas de reports solo para coordinador y admin
+  if (pathname.startsWith('/reports')) {
+    if (payload.role !== 'coordinador' && payload.role !== 'admin') {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
@@ -41,6 +74,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

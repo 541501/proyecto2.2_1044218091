@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "system_name": "ClassSport",
+  "users": [
+    {
+      "id": "admin-001",
+      "name": "Administrador",
+      "email": "admin@classsport.edu.co",
+      "password_hash": "$2a$10$.HsiKzRQVSQUwAyXFAq6FOh5apl87rozp.wpcN9BKs/j1d0PAVvXG",
+      "role": "admin",
+      "is_active": true,
+      "must_change_password": false
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block-A",
+      "name": "Bloque A",
+      "code": "A",
+      "is_active": true
+    },
+    {
+      "id": "block-B",
+      "name": "Bloque B",
+      "code": "B",
+      "is_active": true
+    },
+    {
+      "id": "block-C",
+      "name": "Bloque C",
+      "code": "C",
+      "is_active": true
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot-1",
+      "name": "07:00–09:00",
+      "start_time": "07:00",
+      "end_time": "09:00",
+      "order_index": 1,
+      "is_active": true
+    },
+    {
+      "id": "slot-2",
+      "name": "09:00–11:00",
+      "start_time": "09:00",
+      "end_time": "11:00",
+      "order_index": 2,
+      "is_active": true
+    },
+    {
+      "id": "slot-3",
+      "name": "11:00–13:00",
+      "start_time": "11:00",
+      "end_time": "13:00",
+      "order_index": 3,
+      "is_active": true
+    },
+    {
+      "id": "slot-4",
+      "name": "14:00–16:00",
+      "start_time": "14:00",
+      "end_time": "16:00",
+      "order_index": 4,
+      "is_active": true
+    },
+    {
+      "id": "slot-5",
+      "name": "16:00–18:00",
+      "start_time": "16:00",
+      "end_time": "18:00",
+      "order_index": 5,
+      "is_active": true
+    },
+    {
+      "id": "slot-6",
+      "name": "18:00–20:00",
+      "start_time": "18:00",
+      "end_time": "20:00",
+      "order_index": 6,
+      "is_active": true
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room-A101",
+      "code": "A-101",
+      "block_code": "A",
+      "type": "salon",
+      "capacity": 40,
+      "equipment": "Videobeam, tablero",
+      "is_active": true
+    },
+    {
+      "id": "room-A102",
+      "code": "A-102",
+      "block_code": "A",
+      "type": "salon",
+      "capacity": 35,
+      "equipment": "Tablero",
+      "is_active": true
+    },
+    {
+      "id": "room-B201",
+      "code": "B-201",
+      "block_code": "B",
+      "type": "laboratorio",
+      "capacity": 25,
+      "equipment": "Computadores, videobeam",
+      "is_active": true
+    },
+    {
+      "id": "room-C301",
+      "code": "C-301",
+      "block_code": "C",
+      "type": "auditorio",
+      "capacity": 120,
+      "equipment": "Videobeam, sonido, aire",
+      "is_active": true
+    }
+  ]
+}

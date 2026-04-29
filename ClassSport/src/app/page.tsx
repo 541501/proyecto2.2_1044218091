@@ -1,32 +1,34 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentSession } from '@/lib/auth';
 
 export default function Home() {
-  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    } else if (status === "authenticated") {
-      // Redirigir basado en rol
-      if (session?.user?.rol === "ADMIN" || session?.user?.rol === "COORDINADOR") {
-        router.push("/admin");
+    const checkSession = async () => {
+      const session = await getCurrentSession();
+      if (session) {
+        // Usuario autenticado
+        if (session.role === 'admin') {
+          router.push('/admin/db-setup');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
-        router.push("/dashboard");
+        // No autenticado
+        router.push('/login');
       }
-    }
-  }, [status, session, router]);
+    };
+
+    checkSession();
+  }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-800 mx-auto mb-4"></div>
-        <p className="text-gray-600">Cargando ClassSport...</p>
-      </div>
+    <div className="flex h-screen items-center justify-center">
+      <p className="text-slate-600">Cargando...</p>
     </div>
   );
 }
