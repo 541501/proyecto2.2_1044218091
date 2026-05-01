@@ -59,6 +59,73 @@ export interface Room {
   updated_at?: string;
 }
 
+/**
+ * Salón con información del bloque (usado en vistas de disponibilidad)
+ */
+export interface RoomWithBlock extends Room {
+  block?: Block;
+}
+
+/**
+ * Estado de una franja en el calendario semanal
+ */
+export interface SlotCell {
+  slot_id: string;
+  slot_name: string;
+  status: 'libre' | 'ocupada' | 'pasada';
+  professor_name?: string;
+  subject?: string;
+  group_name?: string;
+}
+
+/**
+ * Día del calendario semanal con su estado
+ */
+export interface DayCalendar {
+  date: string;       // YYYY-MM-DD
+  day_name: string;   // "Lunes", "Martes", etc.
+  day_short: string;  // "Lun", "Mar", etc.
+  is_past: boolean;
+  slots: SlotCell[];
+}
+
+/**
+ * Calendario semanal completo de un salón
+ */
+export interface WeeklyCalendar {
+  room_id: string;
+  room_code: string;
+  block_id: string;
+  block_code: string;
+  week_start: string;   // YYYY-MM-DD del lunes
+  week_end: string;     // YYYY-MM-DD del viernes
+  days: DayCalendar[];  // Lunes a viernes
+}
+
+/**
+ * Disponibilidad de salones por bloque en una fecha
+ */
+export interface RoomAvailability {
+  room_id: string;
+  room_code: string;
+  type: string;
+  capacity: number;
+  equipment?: string;
+  available_slots: number;    // Franjas libres
+  total_slots: number;
+  occupancy_percentage: number;
+}
+
+export interface BlockAvailability {
+  block_id: string;
+  block_code: string;
+  block_name: string;
+  date: string;
+  rooms: RoomAvailability[];
+  total_available_slots: number;
+  total_slots: number;
+}
+
 export interface Reservation {
   id: string;
   room_id: string;

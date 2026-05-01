@@ -53,14 +53,49 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Rutas de reports solo para coordinador y admin
-  if (pathname.startsWith('/reports')) {
+  // Rutas de reportes solo para coordinador y admin
+  if (pathname.startsWith('/reportes') || pathname.startsWith('/reports')) {
     if (payload.role !== 'coordinador' && payload.role !== 'admin') {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
+  }
+
+  // Rutas de reservas globales solo para coordinador y admin
+  // Profesor se redirige a /reservas/mis
+  if (pathname === '/reservas' || pathname === '/reservations') {
+    if (payload.role === 'profesor') {
+      return NextResponse.redirect(new URL('/reservas/mis', request.url));
+    }
+    if (payload.role !== 'coordinador' && payload.role !== 'admin') {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  }
+
+  // Proteger API routes de admin
+  if (pathname.startsWith('/api/admin')) {
+    if (payload.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
+
+  // Proteger API routes de reportes
+  if (pathname.startsWith('/api/reportes') || pathname.startsWith('/api/reports')) {
+    if (payload.role !== 'coordinador' && payload.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
+
+  // Agregar headers no-cache para todas las API routes
+  if (pathname.startsWith('/api/')) {
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   }
 
   return NextResponse.next();

@@ -23,10 +23,10 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/bloques', label: 'Bloques', icon: Building2 },
-    { href: '/mis-reservas', label: 'Mis Reservas', icon: Calendar },
-    ...(session?.user?.rol === 'ADMIN'
-      ? [{ href: '/admin/gestiones', label: 'Gestión', icon: Settings }]
+    { href: '/blocks', label: 'Bloques', icon: Building2 },
+    { href: '/reservations', label: 'Mis Reservas', icon: Calendar },
+    ...(session?.user?.role === 'admin'
+      ? [{ href: '/admin/rooms', label: 'Gestión de Salones', icon: Settings }]
       : []),
   ];
 

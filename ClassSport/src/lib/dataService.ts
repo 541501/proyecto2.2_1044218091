@@ -238,6 +238,242 @@ export async function getRooms(blockId?: string): Promise<Room[]> {
 }
 
 /**
+ * Obtiene un salón por ID
+ */
+export async function getRoomById(id: string): Promise<Room | null> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    const rooms = getSeedRooms();
+    const room = rooms.find((r) => r.id === id);
+    return room || null;
+  }
+
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as Room;
+}
+
+/**
+ * Crea un nuevo salón (solo admin)
+ * RN-09: Valida que el código sea único dentro del bloque
+ */
+export async function createRoom(
+  userId: string,
+  data: {
+    block_id: string;
+    code: string;
+    type: string;
+    capacity: number;
+    equipment?: string;
+  }
+): Promise<Room> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    throw new Error('Cannot create rooms in seed mode');
+  }
+
+  // Validar que el código sea único dentro del bloque
+  const { data: existing } = await supabase
+    .from('rooms')
+    .select('id')
+    .eq('block_id', data.block_id)
+    .eq('code', data.code)
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    const error = new Error(`Room with code ${data.code} already exists in this block`);
+    (error as any).code = 'DUPLICATE_CODE';
+    throw error;
+  }
+
+  const { data: newRoom, error } = await supabase
+    .from('rooms')
+    .insert([
+      {
+        block_id: data.block_id,
+        code: data.code,
+        type: data.type,
+        capacity: data.capacity,
+        equipment: data.equipment || null,
+        is_active: true,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating room:', error);
+    throw error;
+  }
+
+  await recordAudit({
+    id: uuidv4(),
+    timestamp: new Date().toISOString(),
+    user_id: userId,
+    user_email: '',
+    user_role: 'admin',
+    action: 'create_room',
+    entity: 'room',
+    entity_id: newRoom.id,
+    summary: `Created room ${newRoom.code} in block ${newRoom.block_id}`,
+    metadata: { block_id: newRoom.block_id, code: newRoom.code },
+  });
+
+  return newRoom as Room;
+}
+
+/**
+ * Actualiza un salón (solo admin)
+ */
+export async function updateRoom(
+  id: string,
+  userId: string,
+  data: {
+    code?: string;
+    type?: string;
+    capacity?: number;
+    equipment?: string;
+  }
+): Promise<Room> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    throw new Error('Cannot update rooms in seed mode');
+  }
+
+  const { data: updated, error } = await supabase
+    .from('rooms')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating room:', error);
+    throw error;
+  }
+
+  await recordAudit({
+    id: uuidv4(),
+    timestamp: new Date().toISOString(),
+    user_id: userId,
+    user_email: '',
+    user_role: 'admin',
+    action: 'update_room',
+    entity: 'room',
+    entity_id: updated.id,
+    summary: `Updated room ${updated.code}`,
+    metadata: { changes: data },
+  });
+
+  return updated as Room;
+}
+
+/**
+ * Desactiva un salón (solo admin) — paso 1: verifica reservas futuras
+ * RN-10: Si hay reservas futuras activas, retorna warning count para confirmación
+ */
+export async function deactivateRoom(
+  id: string,
+  userId: string
+): Promise<{ warningCount: number }> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    throw new Error('Cannot deactivate rooms in seed mode');
+  }
+
+  // Contar reservas futuras confirmadas
+  const today = new Date().toISOString().split('T')[0];
+  const { data: futureReservations, error } = await supabase
+    .from('reservations')
+    .select('id')
+    .eq('room_id', id)
+    .gte('reservation_date', today)
+    .eq('status', 'confirmada');
+
+  if (error) {
+    throw error;
+  }
+
+  const warningCount = futureReservations?.length || 0;
+
+  return { warningCount };
+}
+
+/**
+ * Confirmación de desactivación de salón (solo admin) — paso 2: ejecuta la desactivación
+ */
+export async function confirmDeactivateRoom(
+  id: string,
+  userId: string
+): Promise<Room> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    throw new Error('Cannot deactivate rooms in seed mode');
+  }
+
+  const { data: updated, error } = await supabase
+    .from('rooms')
+    .update({ is_active: false })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await recordAudit({
+    id: uuidv4(),
+    timestamp: new Date().toISOString(),
+    user_id: userId,
+    user_email: '',
+    user_role: 'admin',
+    action: 'deactivate_room',
+    entity: 'room',
+    entity_id: updated.id,
+    summary: `Deactivated room ${updated.code}`,
+    metadata: {},
+  });
+
+  return updated as Room;
+}
+
+/**
+ * Obtiene disponibilidad de salones en un bloque para una fecha
+ */
+export async function getBlockAvailability(
+  blockId: string,
+  date: string
+): Promise<any> {
+  const { getBlockAvailability: buildAvailability } = await import('./availabilityService');
+  return buildAvailability(blockId, date);
+}
+
+/**
+ * Construye el calendario semanal de un salón
+ */
+export async function getRoomWeeklyCalendar(
+  roomId: string,
+  weekStart: string
+): Promise<any> {
+  const { buildWeeklyCalendar } = await import('./availabilityService');
+  return buildWeeklyCalendar(roomId, weekStart);
+}
+
+/**
  * Diagnóstico del sistema (para /api/system/diagnose)
  */
 export async function getDiagnosis(): Promise<any> {
