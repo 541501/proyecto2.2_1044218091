@@ -238,6 +238,36 @@ export async function getRooms(blockId?: string): Promise<Room[]> {
 }
 
 /**
+ * Obtiene todos los salones (activos e inactivos) — solo para admin
+ */
+export async function getRoomsAll(blockId?: string): Promise<Room[]> {
+  const mode = await getSystemMode();
+
+  if (mode === 'seed') {
+    let rooms = getSeedRooms();
+    if (blockId) {
+      rooms = rooms.filter((r) => r.block_code === blockId);
+    }
+    return rooms;
+  }
+
+  let query = supabase.from('rooms').select('*');
+
+  if (blockId) {
+    query = query.eq('block_id', blockId);
+  }
+
+  const { data, error } = await query.order('code');
+
+  if (error) {
+    console.error('Error fetching all rooms:', error);
+    return [];
+  }
+
+  return data as Room[];
+}
+
+/**
  * Obtiene un salón por ID
  */
 export async function getRoomById(id: string): Promise<Room | null> {

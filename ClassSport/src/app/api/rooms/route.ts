@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getRooms, createRoom } from '@/lib/dataService';
+import { getRooms, getRoomsAll, createRoom } from '@/lib/dataService';
 import { withAuth } from '@/lib/withAuth';
 import { withRole } from '@/lib/withRole';
 import { z } from 'zod';
@@ -21,8 +21,12 @@ export const GET = withAuth(async (req: any) => {
   try {
     const { searchParams } = new URL(req.url);
     const blockId = searchParams.get('blockId');
+    const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const rooms = await getRooms(blockId || undefined);
+    const rooms = includeInactive && req.user?.role === 'admin' 
+      ? await getRoomsAll(blockId || undefined)
+      : await getRooms(blockId || undefined);
+    
     return NextResponse.json(rooms);
   } catch (error) {
     console.error('Error fetching rooms:', error);

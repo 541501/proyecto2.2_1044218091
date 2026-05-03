@@ -33,8 +33,8 @@ export default function RoomsManagementPage() {
         const blocksData = await blocksRes.json();
         setBlocks(blocksData);
 
-        // Cargar todos los salones
-        const roomsRes = await fetch('/api/rooms?all=true');
+        // Cargar todos los salones (incluyendo inactivos)
+        const roomsRes = await fetch('/api/rooms?includeInactive=true');
         const roomsData = await roomsRes.json();
         setRooms(roomsData);
       } catch (error) {
